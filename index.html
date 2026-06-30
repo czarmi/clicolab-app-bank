@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mikroaplikacja: Kursy Walut</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background: #f4f4f9; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .rates { display: flex; gap: 20px; margin-bottom: 30px; }
+        .rate-box { flex: 1; padding: 15px; background: #eef2f7; border-radius: 6px; text-align: center; }
+        .rate-box h3 { margin: 0 0 10px 0; color: #555; }
+        .price { font-size: 24px; font-weight: bold; color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Aktualne Kursy Walut (NBP)</h2>
+    <div class="rates">
+        <div class="rate-box">
+            <h3>USD / PLN</h3>
+            <div id="usd-rate" class="price">Ładowanie...</div>
+        </div>
+        <div class="rate-box">
+            <h3>EUR / PLN</h3>
+            <div id="eur-rate" class="price">Ładowanie...</div>
+        </div>
+    </div>
+
+    <canvas id="currencyChart" width="400" height="200"></canvas>
+</div>
+
+<script>
+    async function fetchCurrencyData() {
+        try {
+            // Pobieramy dane z ostatnich 7 dni roboczych z API NBP
+            const usdRes = await fetch('https://api.nbp.pl/api/exchangerates/rates/a/usd/last/7/?format=json');
+            const eurRes = await fetch('https://api.nbp.pl/api/exchangerates/rates/a/eur/last/7/?format=json');
+            
+            const usdData = await usdRes.json();
+            const eurData = await eurRes.json();
+
+            // Aktualne kursy (ostatni element z tabeli)
+            const currentUSD = usdData.rates[usdData.rates.length - 1].mid;
+            const currentEUR = eurData.rates[eurData.rates.length - 1].mid;
+
+            document.getElementById('usd-rate').innerText = `${currentUSD.toFixed(4)} PLN`;
+            document.getElementById('eur-rate').innerText = `${currentEUR.toFixed(4)} PLN`;
+
+            // Przygotowanie danych do wykresu
+            const labels = usdData.rates.map(r => r.effectiveDate); // daty
+            const usdRates = usdData.rates.map(r => r.mid);
+            const eurRates = eurData.rates.map(r => r.mid);
+
+            renderChart(labels, usdRates, eurRates);
+        } catch (error) {
+            console.error("Błąd pobierania danych z NBP:", error);
+            document.getElementById('usd-rate').innerText = "Błąd";
+            document.getElementById('eur-rate').innerText = "Błąd";
+        }
+    }
+
+    function renderChart(labels, usdData, eurData) {
+        const ctx = document.getElementById('currencyChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'USD (Dolar)',
+                        data: usdData,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.2
+                    },
+                    {
+                        label: 'EUR (Euro)',
+                        data: eurData,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        tension: 0.2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' }
+                }
+            }
+        });
+    }
+
+    // Odpalamy przy załadowaniu strony
+    fetchCurrencyData();
+</script>
+</body>
+</html>

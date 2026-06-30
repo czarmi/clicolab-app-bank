@@ -1,0 +1,10 @@
+# Systemowe śmieci
+.DS_Store
+Thumbs.db
+
+# Lokalne konfiguracje edytorów
+.vscode/
+.idea/
+
+# Logi kontenerów (jeśli się pojawią)
+*.log
