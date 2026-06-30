@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  currency-app:
+    build: .
+    container_name: currency-container
+    ports:
+      - "8181:80"
+    restart: unless-stopped
